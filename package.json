@@ -1,0 +1,27 @@
+{
+  "name": "@dwcore/ref",
+  "version": "0.1.1",
+  "description": "Persistent Reading/Writing To dPack Files. Stored In Random Memory by [dwrem] and Then Written To Disk By [dwres]",
+  "browser": "./dwref-browser.js",
+  "contributors": [
+    "Jared Rice Sr. <jared@dwebs.io>",
+    "Distributed Webs Project, LLC. <labs@distributedwebs.org>"
+  ],
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "standard && tape test.js"
+  },
+  "dependencies": {
+    "@dwcore/res": "dwcore/res#master",
+    "fs-constants": "*",
+    "mkdirp": "*"
+  },
+  "devDependencies": {
+    "standard": "^10.0.3",
+    "tape": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
