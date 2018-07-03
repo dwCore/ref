@@ -1,0 +1,62 @@
+Arguments: 
+  /Users/thejoker/.nvm/versions/node/v10.4.1/bin/node /usr/local/bin/yarn publish
+
+PATH: 
+  /usr/local/opt/openssl/bin:/Users/thejoker/.nvm/versions/node/v10.4.1/bin:/usr/local/opt/postgresql@9.6/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin:/Users/thejoker/.rvm/bin:/Users/thejoker/.rvm/bin
+
+Yarn version: 
+  1.5.1
+
+Node version: 
+  10.4.1
+
+Platform: 
+  darwin x64
+
+npm manifest: 
+  {
+    "name": "@dwcore/ref",
+    "version": "0.1.1",
+    "description": "Persistent Reading/Writing To dPack Files. Stored In Random Memory by [dwrem] and Then Written To Disk By [dwres]",
+    "browser": "./dwref-browser.js",
+    "contributors": [
+      "Jared Rice Sr. <jared@dwebs.io>",
+      "Distributed Webs Project, LLC. <labs@distributedwebs.org>"
+    ],
+    "main": "index.js",
+    "license": "MIT",
+    "scripts": {
+      "test": "standard && tape test.js"
+    },
+    "dependencies": {
+      "@dwcore/res": "dwcore/res#master",
+      "fs-constants": "*",
+      "mkdirp": "*"
+    },
+    "devDependencies": {
+      "standard": "^10.0.3",
+      "tape": "*"
+    },
+    "publishConfig": {
+      "access": "public"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: https://registry.npmjs.org/@dwcore%2fref: You cannot publish over the previously published versions: 0.1.1.
+      at Request.params.callback [as _callback] (/usr/local/lib/node_modules/yarn/lib/cli.js:65019:18)
+      at Request.self.callback (/usr/local/lib/node_modules/yarn/lib/cli.js:132430:22)
+      at Request.emit (events.js:182:13)
+      at Request.<anonymous> (/usr/local/lib/node_modules/yarn/lib/cli.js:133413:10)
+      at Request.emit (events.js:182:13)
+      at Gunzip.<anonymous> (/usr/local/lib/node_modules/yarn/lib/cli.js:133333:12)
+      at Object.onceWrapper (events.js:273:13)
+      at Gunzip.emit (events.js:187:15)
+      at endReadableNT (_stream_readable.js:1081:12)
+      at process._tickCallback (internal/process/next_tick.js:63:19)
