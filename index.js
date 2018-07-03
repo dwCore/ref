@@ -1,26 +1,27 @@
 var inherits = require('util').inherits
 var DWRES = require('@dwcore/res')
 var fs = require('fs')
-var constants = require('fs-constants')
 var mkdirp = require('mkdirp')
 var path = require('path')
+var constants = fs.constants || require('constants')
 
-var DPACK_READONLY_PERMS = constants.O_RDONLY
-var DPACK_READWRITE_PERMS = constants.O_RDWR | constants.O_CREAT
+var READONLY = constants.O_RDONLY
+var READWRITE = constants.O_RDWR | constants.O_CREAT
 
-module.exports = DWRESFile
+module.exports = DWREF
 
-function DWRESFile (dWebFileName, opts) {
-  if (!(this instanceof DWRESFile)) return new DWRESFile(dWebFileName, opts)
+function DWREF (filename, opts) {
+  if (!(this instanceof DWREF)) return new DWREF(filename, opts)
   DWRES.call(this)
 
   if (!opts) opts = {}
-  if (opts.dWebDirectory) dWebFileName = path.join(opts.dWebDirectory, dWebFileName)
+  if (opts.directory) filename = path.join(opts.directory, filename)
 
-  this.dWebDirectory = opts.dWebDirectory || null
-  this.dWebFileName = dWebFileName
+  this.directory = opts.directory || null
+  this.filename = filename
   this.fd = 0
 
+  // makes random-access-storage open in writable mode first
   if (opts.writable || opts.truncate) this.preferReadonly = false
 
   this._size = opts.size || opts.length || 0
@@ -28,65 +29,65 @@ function DWRESFile (dWebFileName, opts) {
   this._rmdir = !!opts.rmdir
 }
 
-inherits(DWRESFile, DWRES)
+inherits(DWREF, DWRES)
 
-DWRESFile.prototype._dWebOpen = function (req) {
+DWREF.prototype._open = function (req) {
   var self = this
 
-  mkdirp(path.dirname(this.dWebFileName), onDPackDir)
+  mkdirp(path.dirname(this.filename), ondir)
 
-  function onDPackDir (err) {
+  function ondir (err) {
     if (err) return req.callback(err)
-    dWebOpen(self, DPACK_READWRITE_PERMS, req)
+    open(self, READWRITE, req)
   }
 }
 
-DWRESFile.prototype._dWebOpenReadOnly = function (req) {
-  dWebOpen(this, DPACK_READONLY_PERMS, req)
+DWREF.prototype._openReadonly = function (req) {
+  open(this, READONLY, req)
 }
 
-DWRESFile.prototype._dWebWrite = function (req) {
+DWREF.prototype._write = function (req) {
   var data = req.data
   var fd = this.fd
 
-  fs.write(fd, data, 0, req.size, req.offset, dWebOnWrite)
+  fs.write(fd, data, 0, req.size, req.offset, onwrite)
 
-  function dWebOnWrite (err, wrote) {
+  function onwrite (err, wrote) {
     if (err) return req.callback(err)
 
     req.size -= wrote
     req.offset += wrote
 
     if (!req.size) return req.callback(null)
-    fs.write(fd, data, data.length - req.size, req.size, req.offset, dWebOnWrite)
+    fs.write(fd, data, data.length - req.size, req.size, req.offset, onwrite)
   }
 }
 
-DWRESFile.prototype._dWebRead = function (req) {
+DWREF.prototype._read = function (req) {
   var data = req.data || Buffer.allocUnsafe(req.size)
   var fd = this.fd
 
   if (!req.size) return process.nextTick(readEmpty, req)
-  fs.read(fd, data, 0, req.size, req.offset, dWebOnRead)
+  fs.read(fd, data, 0, req.size, req.offset, onread)
 
-  function dWebOnRead (err, dWebRead) {
+  function onread (err, read) {
     if (err) return req.callback(err)
-    if (!dWebRead) return req.callback(new Error('Could not satisfy length'))
+    if (!read) return req.callback(new Error('Could not satisfy length'))
 
-    req.size -= dWebRead
-    req.offset += dWebRead
+    req.size -= read
+    req.offset += read
 
     if (!req.size) return req.callback(null, data)
-    fs.read(fd, data, data.length - req.size, req.size, req.offset, dWebOnRead)
+    fs.read(fd, data, data.length - req.size, req.size, req.offset, onread)
   }
 }
 
-DWRESFile.prototype._dWebRemove = function (req) {
+DWREF.prototype._del = function (req) {
   var fd = this.fd
 
-  fs.fstat(fd, dWebOnStat)
+  fs.fstat(fd, onstat)
 
-  function dWebOnStat (err, st) {
+  function onstat (err, st) {
     if (err) return req.callback(err)
     if (req.offset + req.size < st.size) return req.callback(null)
     fs.ftruncate(fd, req.offset, ontruncate)
@@ -97,63 +98,63 @@ DWRESFile.prototype._dWebRemove = function (req) {
   }
 }
 
-DWRESFile.prototype._dWebStat = function (req) {
-  fs.fstat(this.fd, dWebOnStat)
+DWREF.prototype._stat = function (req) {
+  fs.fstat(this.fd, onstat)
 
-  function dWebOnStat (err, st) {
+  function onstat (err, st) {
     req.callback(err, st)
   }
 }
 
-DWRESFile.prototype._dWebClose = function (req) {
+DWREF.prototype._close = function (req) {
   var self = this
 
-  fs.close(this.fd, dWebOnClose)
+  fs.close(this.fd, onclose)
 
-  function dWebOnClose (err) {
+  function onclose (err) {
     if (err) return req.callback(err)
     self.fd = 0
     req.callback(null)
   }
 }
 
-DWRESFile.prototype._dWebKill = function (req) {
+DWREF.prototype._destroy = function (req) {
   var self = this
 
-  var root = this.dWebDirectory && path.resolve(path.join(this.dWebDirectory, '.'))
-  var dir = path.resolve(path.dirname(this.dWebFileName))
+  var root = this.directory && path.resolve(path.join(this.directory, '.'))
+  var dir = path.resolve(path.dirname(this.filename))
 
-  fs.unlink(this.dWebFileName, dWebOnUnlink)
+  fs.unlink(this.filename, onunlink)
 
-  function dWebOnUnlink (err) {
+  function onunlink (err) {
     if (!self._rmdir || !root || dir === root) return req.callback(err)
-    fs.rmdir(dir, dWebOnRmDir)
+    fs.rmdir(dir, onrmdir)
   }
 
-  function dWebOnRmDir (err) {
+  function onrmdir (err) {
     dir = path.join(dir, '..')
     if (err || dir === root) return req.callback(null)
-    fs.rmdir(dir, dWebOnRmDir)
+    fs.rmdir(dir, onrmdir)
   }
 }
 
-function dWebOpen (self, mode, req) {
-  fs.open(self.dWebFileName, mode, dWebOnOpen)
+function open (self, mode, req) {
+  fs.open(self.filename, mode, onopen)
 
-  function dWebOnOpen (err, fd) {
+  function onopen (err, fd) {
     if (err) return req.callback(err)
 
     var old = self.fd
     self.fd = fd
-    if (!old) return dWebOnCloseOldFD(null)
+    if (!old) return oncloseoldfd(null)
 
     // if we are moving from readonly -> readwrite, close the old fd
-    fs.close(old, dWebOnCloseOldFD)
+    fs.close(old, oncloseoldfd)
   }
 
-  function dWebOnCloseOldFD (err) {
+  function oncloseoldfd (err) {
     if (err) return onerrorafteropen(err)
-    if (!self._truncate || mode === DPACK_READONLY_PERMS) return req.callback(null)
+    if (!self._truncate || mode === READONLY) return req.callback(null)
     fs.ftruncate(self.fd, self._size, ontruncate)
   }
 
