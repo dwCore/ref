@@ -79,12 +79,12 @@ tape('DWREF Tests: dWeb File Read/Write w/ Random Entry ', function (t) {
 })
 
 tape('DWREF Tests: Re-open', function (t) {
-  var fileName = gen()
-  var file = DWREF(fileName)
+  var name = gen()
+  var file = DWREF(name)
 
   file.write(10, Buffer.from('hello'), function (err) {
     t.error(err, 'DWREF Tests: Success! No Errors.')
-    var file2 = DWREF(fileName)
+    var file2 = DWREF(name)
     file2.read(10, 5, function (err, buf) {
       t.error(err, 'DWREF Tests: Success! No Errors.')
       t.same(buf, Buffer.from('hello'))
@@ -94,12 +94,12 @@ tape('DWREF Tests: Re-open', function (t) {
 })
 
 tape('DWREF Tests: Re-Open and Truncate', function (t) {
-  var fileName = gen()
-  var file = DWREF(fileName)
+  var name = gen()
+  var file = DWREF(name)
 
   file.write(10, Buffer.from('hello'), function (err) {
     t.error(err, 'DWREF Tests: Success! No Errors.')
-    var file2 = DWREF(fileName, {truncate: true})
+    var file2 = DWREF(name, {truncate: true})
     file2.read(10, 5, function (err, buf) {
       t.ok(err, 'DWREF Tests Issue: dWeb File Should Be Truncated')
       t.end()
@@ -136,8 +136,8 @@ tape('DWREF Tests: Bad dWeb File Truncate.', function (t) {
 })
 
 tape('DWREF Tests: mkdir Path', function (t) {
-  var fileName = path.join(tmp, ++i + '-folder', 'test.txt')
-  var file = DWREF(fileName)
+  var name = path.join(tmp, ++i + '-folder', 'test.txt')
+  var file = DWREF(name)
 
   file.write(0, Buffer.from('hello'), function (err) {
     t.error(err, 'DWREF Tests: Success! No Errors.')
@@ -180,8 +180,8 @@ tape('DWREF Tests: dWeb File Read/Write Big Chunks', function (t) {
 })
 
 tape('DWREF Tests: rmdir Option', function (t) {
-  var fileName = path.join('rmdir', ++i + '', 'folder', 'test.txt')
-  var file = DWREF(fileName, {rmdir: true, directory: tmp})
+  var name = path.join('rmdir', ++i + '', 'folder', 'test.txt')
+  var file = DWREF(name, {rmdir: true, directory: tmp})
 
   file.write(0, Buffer.from('hi'), function (err) {
     t.error(err, 'DWREF Tests: Success! No Errors.')
@@ -202,9 +202,9 @@ tape('DWREF Tests: rmdir Option', function (t) {
 })
 
 tape('DWREF Tests: rmdir Option Where Parent Is Not Empty', function (t) {
-  var fileName = path.join('rmdir', ++i + '', 'folder', 'test.txt')
-  var nonEmpty = path.join(tmp, fileName, '../..')
-  var file = DWREF(fileName, {rmdir: true, directory: tmp})
+  var name = path.join('rmdir', ++i + '', 'folder', 'test.txt')
+  var nonEmpty = path.join(tmp, name, '../..')
+  var file = DWREF(name, {rmdir: true, directory: tmp})
 
   file.write(0, Buffer.from('hi'), function (err) {
     t.error(err, 'DWREF Tests: Success! No Errors.')
@@ -229,23 +229,23 @@ tape('DWREF Tests: rmdir Option Where Parent Is Not Empty', function (t) {
   }
 })
 
-tape('DWREF Tests Error: dWeb Delete', function (t) {
+tape('DWREF Tests: Delete File', function (t) {
   var file = DWREF(gen())
 
   file.write(0, Buffer.alloc(100), function (err) {
-    t.error(err, 'DWREF Tests: Success! No Errors.')
+    t.error(err, 'no error')
     file.stat(function (err, st) {
-      t.error(err, 'DWREF Tests: Success! No Errors.')
+      t.error(err, 'no error')
       t.same(st.size, 100)
-      file.remove(0, 40, function (err) {
-        t.error(err, 'DWREF Tests: Success! No Errors.')
+      file.del(0, 40, function (err) {
+        t.error(err, 'no error')
         file.stat(function (err, st) {
-          t.error(err, 'DWREF Tests: Success! No Errors.')
+          t.error(err, 'no error')
           t.same(st.size, 100, 'inplace del, same size')
-          file.remove(50, 50, function (err) {
-            t.error(err, 'DWREF Tests: Success! No Errors.')
+          file.del(50, 50, function (err) {
+            t.error(err, 'no error')
             file.stat(function (err, st) {
-              t.error(err, 'DWREF Tests: Success! No Errors.')
+              t.error(err, 'no error')
               t.same(st.size, 50)
               file.destroy(() => t.end())
             })
@@ -256,21 +256,21 @@ tape('DWREF Tests Error: dWeb Delete', function (t) {
   })
 })
 
-tape('DWREF Tests: Open and Close dWeb File Many Times.', function (t) {
-  var fileName = gen()
-  var file = DWREF(fileName)
+tape('DWREF Tests: Open/Close File Many Times', function (t) {
+  var name = gen()
+  var file = DWREF(name)
   var buf = Buffer.alloc(4)
 
   file.write(0, buf, function (err) {
-    t.error(err, 'DWREF Tests: Success! No Errors.')
+    t.error(err, 'no error')
     loop(5000, function (err) {
-      t.error(err, 'DWREF Tests: Success! No Errors.')
+      t.error(err, 'no error')
       file.destroy(() => t.end())
     })
   })
 
   function loop (n, cb) {
-    var file = DWREF(fileName)
+    var file = DWREF(name)
     file.read(0, 4, function (err, buffer) {
       if (err) return cb(err)
       if (!buf.equals(buffer)) {
@@ -289,14 +289,14 @@ tape('DWREF Tests: Open and Close dWeb File Many Times.', function (t) {
   }
 })
 
-tape('DWREF Tests: dWeb File Open Error Trigger', function (t) {
+tape('DWREF Tests: Trigger Bad Open', function (t) {
   var file = DWREF(gen(), {writable: true})
 
   file.fd = -1
   file.open(function (err) {
-    t.ok(err, 'DWREF Tests Error: Errored Out Trying to Close Previous File Directory')
+    t.ok(err, 'should error trying to close old fd')
     file.open(function (err) {
-      t.error(err, 'DWREF Tests: Success! No Errors.')
+      t.error(err, 'no error')
       file.destroy(() => t.end())
     })
   })
