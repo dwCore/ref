@@ -1,6 +1,6 @@
 {
   "name": "@dwcore/ref",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Persistent Reading/Writing To dPack Files. Stored In Random Memory by [dwrem] and Then Written To Disk By [dwres]",
   "browser": "./dwref-browser.js",
   "contributors": [
